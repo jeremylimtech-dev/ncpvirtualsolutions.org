@@ -48,7 +48,7 @@
         <input type="password" id="adminPass" placeholder="Password">
       </div>
 
-      <button class="login-btn" onclick="testlogin()">Login</button>
+      <button class="login-btn" onclick="loginAdmin()">Login</button>
 
     </div>
 
@@ -112,13 +112,15 @@ function handleCredentialResponse(response) {
 
 function verifyEmployee(idToken) {
 
-  const body = new URLSearchParams();
-  body.append("action", "employeeAuth");
-  body.append("idToken", idToken);
-
   fetch(SCRIPT_URL, {
     method: "POST",
-    body: body
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      action: "employeeAuth",
+      idToken: idToken
+    })
   })
   .then(res => res.json())
   .then(data => {
@@ -142,9 +144,6 @@ function verifyEmployee(idToken) {
 /* =========================
    ADMIN LOGIN
 ========================= */
-function testlogin() {
-  window.location.href = "admin-dashboard.html";
-}
 
 function loginAdmin() {
 
