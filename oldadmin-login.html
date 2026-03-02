@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="/ncpicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="/ncpicon.ico" type="image/x-icon">
+</head>
+<body>
+
+<!-- Branding (Top Left) -->
+<div style="position: fixed; top: 20px; left: 30px; z-index: 10;">
+  <div class="brand">
+    <div class="brand-circle">
+      <img src="logo.png" alt="NCP Logo">
+    </div>
+    <span>NCP Bookkeeping</span>
+  </div>
+</div>
+
+<div class="container">
+  <h1>Admin Login</h1>
+
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+
+	<button class="primary-btn" onclick="loginAdmin()" id="loginBtn">
+		Login
+	</button>
+
+	<button class="secondary-btn" onclick="goBack()" style="margin-top: 10px;">
+		Back
+	</button>
+
+</div>
+
+<script>
+const SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbz4zMRShI6IwL7ehez3Q9VX_ysMQb3Otv__59tgoe5-91zfEN1THvLSJjty_TCN24Wp/exec";
+
+function goBack() {
+  if (document.referrer) {
+    window.location.href = "employee-login.html";
+  }
+}
+
+
+function loginAdmin() {
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const btn = document.getElementById("loginBtn");
+
+  if (!username || !password) {
+    alert("Please enter username and password");
+    return;
+  }
+
+  // 🔄 loading state
+  btn.disabled = true;
+  btn.classList.add("loading");
+  btn.innerHTML = "Logging in…";
+
+  const formData = new FormData();
+  formData.append("action", "loginAdmin");
+  formData.append("username", username);
+  formData.append("password", password);
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: formData
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) {
+        throw new Error(data.message || "Login failed");
+      }
+
+      localStorage.setItem("isAdmin", "true");
+      localStorage.setItem("adminName", data.name);
+
+      window.location.href = "admin-dashboard.html";
+    })
+    .catch(err => {
+      alert(err.message);
+
+      btn.disabled = false;
+      btn.classList.remove("loading");
+      btn.innerHTML = "Login";
+    });
+}
+</script>
+
+</body>
+</html>

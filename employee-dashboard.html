@@ -1,89 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Employee Dashboard</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="/ncpicon.ico" type="image/x-icon">
-  <link rel="shortcut icon" href="/ncpicon.ico" type="image/x-icon">
+<meta charset="UTF-8">
+<title>Employee Dashboard</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="/ncpicon.ico">
 </head>
-<body>
 
-<!-- Logout button -->
-<div class="admin-icon" onclick="logout()">Logout</div>
+<body class="admin-page">
 
-<!-- Branding -->
-<div style="position: fixed; top: 20px; left: 30px; z-index: 10;">
-  <div class="brand">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+
+  <div class="sidebar-brand">
     <div class="brand-circle">
-      <img src="logo.png" alt="NCP Logo">
+      <img src="logo.png">
     </div>
-    <span>Employee Dashboard</span>
+    <span>Employee</span>
   </div>
-</div>
 
-<!-- DASHBOARD CARD -->
-<div class="container">
+  <nav class="sidebar-nav">
+    <a class="active" href="#">Dashboard</a>
+    <a href="leave-details.html">Submit Leave</a>
+    <a href="overtime-submission.html">Render OT</a>
+    <a href="leave-history.html">Leave History</a>
+  </nav>
 
-  <h1 id="employeeName">Employee</h1>
-  <p style="font-size: 13px; opacity: 0.85;" id="employeeEmail"></p>
+  <button class="logout-btn" onclick="logoutEmployee()">Logout</button>
 
-  <button class="primary-btn" onclick="goApplyLeave()" style="margin-top: 18px;">
-    Apply for Leave
-  </button>
+</aside>
 
-  <button class="primary-btn" onclick="goMyLeaves()" style="margin-top: 10px;">
-    My Leave History
-  </button>
+<!-- MAIN CONTENT -->
+<main class="main-content fade-in">
 
-</div>
+  <!-- HEADER -->
+  <header class="top-header">
+
+    <h1 id="welcomeText"></h1>
+
+    <div class="header-right">
+
+      <div class="notification">
+        🔔
+        <span class="notification-badge" id="notifCount">0</span>
+        <div class="notification-dropdown" id="notificationDropdown"></div>
+      </div>
+
+      <div class="profile-box">
+        <div class="profile-avatar" id="profileInitials"></div>
+        <div class="profile-info">
+          <div class="profile-name" id="employeeName"></div>
+          <div class="profile-email" id="employeeEmail"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </header>
+
+  <!-- STATS -->
+  <div class="stats-container">
+
+    <div class="stat-card">
+      <h3>Total Leaves Taken</h3>
+      <div class="stat-number" id="totalLeaves">0</div>
+    </div>
+
+    <div class="stat-card">
+      <h3>Pending Leaves</h3>
+      <div class="stat-number" id="pendingLeaves">0</div>
+    </div>
+
+    <div class="stat-card">
+      <h3>Total OT Hours</h3>
+      <div class="stat-number" id="totalOT">0</div>
+    </div>
+
+    <div class="stat-card">
+      <h3>Pending OT</h3>
+      <div class="stat-number" id="pendingOT">0</div>
+    </div>
+
+  </div>
+
+  <!-- LEAVE HISTORY -->
+  <section class="dashboard-section">
+    <h2>My Leave Requests</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Duration</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="leaveTable"></tbody>
+    </table>
+  </section>
+
+  <!-- OT HISTORY -->
+  <section class="dashboard-section">
+    <h2>My Overtime Renders</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Hours</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="otTable"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<script src="auth.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  /* =====================
-     AUTH GUARD
-  ===================== */
-  const token = localStorage.getItem("employeeToken");
 
-  if (!token) {
-    window.location.replace("employee-login.html");
-    return;
+document.addEventListener("DOMContentLoaded", async function () {
+
+  // 🔐 REQUIRE AUTH FIRST
+  if (!requireAuth()) return;
+
+  // 👤 Load employee from localStorage
+  const employee = getEmployee();
+
+  // Auto-fill header
+  initEmployeeProfile();
+
+  document.getElementById("welcomeText").innerText =
+    "Welcome back, " + employee.name.split(" ")[0];
+
+  const bell = document.querySelector(".notification");
+  const dropdown = document.getElementById("notificationDropdown");
+
+  if (bell && dropdown) {
+    bell.addEventListener("click", function (e) {
+      e.stopPropagation();
+      dropdown.classList.toggle("show");
+    });
+
+    document.addEventListener("click", function () {
+      dropdown.classList.remove("show");
+    });
   }
 
-  /* =====================
-     DISPLAY INFO
-  ===================== */
-  const employeeName = localStorage.getItem("employeeName");
-  const employeeEmail = localStorage.getItem("employeeEmail");
+  // 🔐 SECURE FETCH USING GLOBAL WRAPPER
+  const data = await securePost("getEmployeeDashboardSecure");
 
-  document.getElementById("employeeName").innerText =
-    employeeName || "Employee";
+  if (!data || !data.success) return;
 
-  document.getElementById("employeeEmail").innerText =
-    employeeEmail || "";
+  animateCounter("totalLeaves", data.totalLeaves);
+  animateCounter("pendingLeaves", data.pendingLeaves);
+  animateCounter("totalOT", data.totalOT);
+  animateCounter("pendingOT", data.pendingOT);
+
+  renderLeaveTable(data.leaves);
+  renderOTTable(data.overtime);
+
+  const totalPending = data.pendingLeaves + data.pendingOT;
+  document.getElementById("notifCount").innerText = totalPending;
+
+  if (totalPending === 0) {
+    dropdown.innerHTML =
+      `<div class="notif-item">No new notifications</div>`;
+  } else {
+    dropdown.innerHTML = `
+      ${data.pendingLeaves > 0 ? `<div class="notif-item">You have ${data.pendingLeaves} pending leave request(s)</div>` : ""}
+      ${data.pendingOT > 0 ? `<div class="notif-item">You have ${data.pendingOT} pending OT request(s)</div>` : ""}
+    `;
+  }
+
 });
-
-/* =====================
-   NAVIGATION
-===================== */
-function goApplyLeave() {
-  window.location.href = "leave-details.html";
-}
-
-function goMyLeaves() {
-  window.location.href = "leavehistory.html";
-}
-
-function logout() {
-  localStorage.removeItem("employeeToken");
-  localStorage.removeItem("employeeName");
-  localStorage.removeItem("employeeEmail");
-  window.location.href = "employee-login.html";
-}
 
 </script>
 
 </body>
 </html>
 
-
+</body>
+</html>

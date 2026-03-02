@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Leave History</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="/ncpicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="/ncpicon.ico" type="image/x-icon">
+</head>
+
+<body class="admin-page">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+
+  <div class="sidebar-brand">
+    <div class="brand-circle">
+      <img src="logo.png">
+    </div>
+    <span>Employee</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="employee-dashboard.html">Dashboard</a>
+    <a href="leave-details.html">File a Leave</a>
+    <a href="overtime-submission.html">Render OT</a>
+    <a class="active" href="#">Leave History</a>
+  </nav>
+
+  <button class="logout-btn">Logout</button>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content fade-in">
+
+  <header class="top-header">
+    <h1>My Leave History</h1>
+
+    <div class="profile-box">
+      <div class="profile-avatar">JL</div>
+      <div class="profile-info">
+        <div class="profile-name">Jeremy Angelo Lim</div>
+        <div class="profile-email">jeremy.spacemeters@gmail.com</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- LOADING -->
+  <div id="historyLoading" class="table-loading">
+    <div class="loader"></div>
+    Loading your leave history…
+  </div>
+
+  <!-- LIST -->
+  <div id="leaveGrid" class="leave-grid hidden"></div>
+
+  <!-- EMPTY -->
+  <div id="emptyState" class="empty-state hidden">
+    You don’t have any leave records yet.
+  </div>
+
+</main>
+
+<script>
+const SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbz4zMRShI6IwL7ehez3Q9VX_ysMQb3Otv__59tgoe5-91zfEN1THvLSJjty_TCN24Wp/exec";
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  const token = localStorage.getItem("employeeToken");
+
+  if (!token) {
+    window.location.replace("employee-login.html");
+    return;
+  }
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: new URLSearchParams({
+      action: "getLeaveHistorySecure",
+      token
+    })
+  })
+  .then(res => res.json())
+  .then(res => {
+
+    document.getElementById("historyLoading").classList.add("hidden");
+
+    if (!res.success || !res.data || res.data.length === 0) {
+      document.getElementById("emptyState").classList.remove("hidden");
+      return;
+    }
+
+    const grid = document.getElementById("leaveGrid");
+    grid.classList.remove("hidden");
+
+    // Latest first
+    res.data.sort((a, b) => new Date(b.start) - new Date(a.start));
+
+    res.data.forEach(l => {
+
+      const card = document.createElement("div");
+      card.className = "request-card";
+
+      const start = formatDate(l.start);
+      const end = formatDate(l.end);
+      const sameDay = start === end;
+
+      const statusClass =
+        l.status === "Approved"
+          ? "status-approved"
+          : l.status === "Rejected"
+          ? "status-rejected"
+          : "status-pending";
+
+      card.innerHTML = `
+        <div class="request-body">
+
+          <div class="request-top">
+            <div class="employee-name">${l.type} Leave</div>
+            <span class="status-badge ${statusClass}">
+              ${l.status}
+            </span>
+          </div>
+
+          <div class="meta">
+            <span class="pill">${l.hours} hrs</span>
+          </div>
+
+          <div class="dates">
+            📅 ${sameDay ? start : `${start} → ${end}`}
+          </div>
+
+          <div class="reason">
+            ${l.reason || "—"}
+          </div>
+
+        </div>
+      `;
+
+      grid.appendChild(card);
+    });
+
+  })
+  .catch(err => {
+    console.error(err);
+    document.getElementById("historyLoading").innerHTML =
+      "Failed to load leave history.";
+  });
+
+});
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+}
+</script>
+
+</body>
+</html>

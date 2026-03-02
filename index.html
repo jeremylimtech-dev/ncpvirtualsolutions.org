@@ -1,53 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>NCP Bookkeeping</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="/ncpicon.ico" type="image/x-icon">
-  <link rel="shortcut icon" href="/ncpicon.ico" type="image/x-icon">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+
+<link rel="stylesheet" href="login.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+
 <body>
 
-<!-- Admin Button -->
-<div class="admin-icon" onclick="goAdmin()">Login</div>
+<div class="main-container">
 
-<!-- Branding -->
-<div style="position: fixed; top: 20px; left: 30px; z-index: 10;">
-  <div class="brand">
-    <div class="brand-circle">
-      <img src="logo.png" alt="NCP Logo">
+  <div class="login-card">
+
+    <div class="login-brand">
+      <img src="logo.png">
+      <span>NCP Bookkeeping</span>
     </div>
-    <span>NCP Bookkeeping</span>
+
+    <!-- TOGGLE -->
+    <div class="role-toggle">
+      <button id="employeeTab" class="active" onclick="switchRole('employee')">Employee</button>
+      <button id="adminTab" onclick="switchRole('admin')">Admin</button>
+    </div>
+
+    <!-- EMPLOYEE SECTION -->
+    <div id="employeeSection">
+
+      <h2>Employee Login</h2>
+
+      <div id="googleBtn" class="google-wrapper"></div>
+
+    </div>
+
+    <!-- ADMIN SECTION -->
+    <div id="adminSection" style="display:none;">
+
+      <h2>Admin Login</h2>
+
+      <div class="input-group">
+        <input type="text" id="adminUser" placeholder="Username">
+      </div>
+
+      <div class="input-group">
+        <input type="password" id="adminPass" placeholder="Password">
+      </div>
+
+      <button class="login-btn" onclick="testlogin()">Login</button>
+
+    </div>
+
   </div>
+
 </div>
 
-<!-- HERO CONTENT 
-<div class="home-hero">
-  <h1>
-    Do what you do best,<br>
-    leave the numbers to us 😊
-  </h1>
-
-  <button class="primary-btn" onclick="goInquire()">
-    Inquire now
-  </button>
-</div>-->
-
 <script>
-function goAdmin() {
-  window.location.href = "employee-login.html";
+
+const SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbz4zMRShI6IwL7ehez3Q9VX_ysMQb3Otv__59tgoe5-91zfEN1THvLSJjty_TCN24Wp/exec";
+
+/* =========================
+   SWITCH ROLE
+========================= */
+function switchRole(role) {
+
+  const emp = document.getElementById("employeeSection");
+  const adm = document.getElementById("adminSection");
+
+  const empTab = document.getElementById("employeeTab");
+  const admTab = document.getElementById("adminTab");
+
+  if (role === "employee") {
+    emp.style.display = "block";
+    adm.style.display = "none";
+    empTab.classList.add("active");
+    admTab.classList.remove("active");
+  } else {
+    emp.style.display = "none";
+    adm.style.display = "block";
+    empTab.classList.remove("active");
+    admTab.classList.add("active");
+  }
 }
 
-function goInquire() {
-  window.open(
-    "https://www.facebook.com/profile.php?id=100094502228820",
-    "_blank"
+/* =========================
+   GOOGLE INIT
+========================= */
+window.onload = function () {
+
+  google.accounts.id.initialize({
+    client_id: "900054162881-dvjja2fq6chqmib71avgsbkrr0es0kt1.apps.googleusercontent.com",
+    callback: handleCredentialResponse
+  });
+
+  google.accounts.id.renderButton(
+    document.getElementById("googleBtn"),
+    {
+      theme: "filled_blue",
+      size: "large",
+      shape: "pill",
+      width: 280
+    }
   );
+};
+
+function handleCredentialResponse(response) {
+  verifyEmployee(response.credential);
 }
+
+function verifyEmployee(idToken) {
+
+  const body = new URLSearchParams({
+    action: "verifyEmployeeGoogle",
+    token: idToken
+  });
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (!data.success) {
+      alert("Access denied.");
+      return;
+    }
+
+    localStorage.setItem("employeeToken", idToken);
+    window.location.href = "employee-dashboard.html";
+  });
+}
+
+/* =========================
+   ADMIN LOGIN
+========================= */
+function testlogin() {
+  window.location.href = "admin-dashboard.html";
+}
+
+function loginAdmin() {
+
+  const username = document.getElementById("adminUser").value;
+  const password = document.getElementById("adminPass").value;
+
+  const body = new URLSearchParams({
+    action: "verifyAdmin",
+    username,
+    password
+  });
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (!data.success) {
+      alert("Invalid credentials.");
+      return;
+    }
+
+    localStorage.setItem("adminToken", "true");
+    window.location.href = "admin-dashboard.html";
+  });
+}
+
 </script>
 
 </body>
 </html>
-
-

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Render Overtime</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="/ncpicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="/ncpicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+</head>
+
+<body class="admin-page">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+
+  <div class="sidebar-brand">
+    <div class="brand-circle">
+      <img src="logo.png">
+    </div>
+    <span>Employee</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="employee-dashboard.html">Dashboard</a>
+    <a href="leave-details.html">File a Leave</a>
+    <a class="active" href="#">Render OT</a>
+    <a href="leave-history.html">Leave History</a>
+  </nav>
+
+  <button class="logout-btn">Logout</button>
+</aside>
+
+<!-- MAIN -->
+<main class="main-content fade-in">
+
+  <!-- HEADER -->
+  <header class="top-header">
+    <h1>Render Overtime</h1>
+
+    <div class="profile-box">
+      <div class="profile-avatar">JL</div>
+      <div class="profile-info">
+        <div class="profile-name">Jeremy Angelo Lim</div>
+        <div class="profile-email">jeremy.spacemeters@gmail.com</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- OT FORM CARD -->
+  <div class="ot-form-card">
+
+    <div class="ot-grid">
+
+      <div class="form-group">
+        <label>Date</label>
+        <input type="text" id="otDate" placeholder="Select date">
+      </div>
+
+      <div class="form-group">
+        <label>Hours</label>
+        <select id="otHours">
+          <option value="" disabled selected>Select hours</option>
+          <option value="1">1 Hour</option>
+          <option value="2">2 Hours</option>
+          <option value="3">3 Hours</option>
+          <option value="4">4 Hours</option>
+          <option value="5">5 Hours</option>
+          <option value="6">6 Hours</option>
+          <option value="7">7 Hours</option>
+          <option value="8">8 Hours</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="otDescription" placeholder="Describe the overtime work..."></textarea>
+    </div>
+
+    <div class="submit-wrapper">
+      <button class="primary-btn" id="otSubmitBtn" onclick="submitOT()" disabled>
+        Submit
+      </button>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- OT TOAST ONLY -->
+<div class="ot-toast-container" id="otToastContainer"></div>
+
+<script src="auth.js"></script>
+
+<script>
+
+let selectedDate = null;
+let submitting = false;
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  // 🔐 Require login
+  if (!requireAuth()) return;
+
+  // 👤 Load profile header
+  initEmployeeProfile();
+
+  flatpickr("#otDate", {
+    dateFormat: "Y-m-d",
+    maxDate: "today",
+    onChange: function(dates) {
+      selectedDate = dates[0] || null;
+      validateForm();
+    }
+  });
+
+  document.getElementById("otHours").addEventListener("change", validateForm);
+  document.getElementById("otDescription").addEventListener("input", autoResize);
+
+  validateForm();
+});
+
+
+/* =====================
+   AUTO RESIZE
+===================== */
+function autoResize() {
+  const el = document.getElementById("otDescription");
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+  validateForm();
+}
+
+
+/* =====================
+   VALIDATION
+===================== */
+function validateForm() {
+
+  const hours = document.getElementById("otHours").value;
+  const desc = document.getElementById("otDescription").value.trim();
+  const btn = document.getElementById("otSubmitBtn");
+
+  if (selectedDate && hours && desc) {
+    btn.disabled = false;
+    btn.classList.remove("disabled-state");
+  } else {
+    btn.disabled = true;
+    btn.classList.add("disabled-state");
+  }
+}
+
+
+/* =====================
+   SUBMIT (SECURE)
+===================== */
+async function submitOT() {
+
+  if (submitting) return;
+
+  const hours = document.getElementById("otHours").value;
+  const desc = document.getElementById("otDescription").value.trim();
+  const btn = document.getElementById("otSubmitBtn");
+
+  if (!selectedDate || !hours || !desc) {
+    showOTToast("Please complete all fields.");
+    return;
+  }
+
+  submitting = true;
+  btn.classList.add("loading");
+  btn.disabled = true;
+
+  const res = await securePost("submitOvertimeSecure", {
+    date: selectedDate.toISOString().split("T")[0],
+    hours: Number(hours),
+    description: desc
+  });
+
+  if (!res || !res.success) {
+    showOTToast("Submission failed.");
+    btn.classList.remove("loading");
+    btn.disabled = false;
+    submitting = false;
+    return;
+  }
+
+  btn.classList.remove("loading");
+  btn.innerText = "Submitted ✓";
+  btn.style.background = "#16a34a";
+
+  showOTToast("Overtime submitted successfully!", "success");
+
+  setTimeout(() => {
+    window.location.href = "employee-dashboard.html";
+  }, 800);
+}
+
+
+/* =====================
+   OT TOAST
+===================== */
+function showOTToast(message, type = "error") {
+
+  const container = document.getElementById("otToastContainer");
+
+  const toast = document.createElement("div");
+  toast.className = `ot-toast ${type}`;
+  toast.innerText = message;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(25px)";
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+</script>
+
+</body>
+</html>

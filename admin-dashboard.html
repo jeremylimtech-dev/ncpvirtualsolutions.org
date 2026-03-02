@@ -1,71 +1,382 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="/ncpicon.ico" type="image/x-icon">
-  <link rel="shortcut icon" href="/ncpicon.ico" type="image/x-icon">
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="/ncpicon.ico">
 </head>
-<body>
-<div class="admin-icon" onclick="goLogout()">Logout</div>
 
-<!-- Branding -->
-<div style="position: fixed; top: 20px; left: 30px; z-index: 10;">
-  <div class="brand">
-    <div class="brand-circle">
-      <img src="logo.png" alt="NCP Logo">
-    </div>
-    <span>Admin Dashboard</span>
-  </div>
-</div>
-
-<!-- DASHBOARD CARD -->
-<div class="container">
-
-  <button class="primary-btn" onclick="goLeaveRequests()">
-    Leave Requests
-  </button>
-
-  <button class="primary-btn" style="margin-top: 10px;" onclick="goOrgChart()">
-    Organizational Chart
-  </button>
-
-  <button class="primary-btn" style="margin-top: 10px;" onclick="goEmployeeList()">
-    Employee List
-  </button>
-
-</div>
+<body class="admin-page">
 
 <script>
-/* =====================
-   NAVIGATION
-===================== */
-function goLeaveRequests() {
-  window.location.href = "leave-submission-admin.html";
+const adminData = {
+  name: "Jeremy Angelo Lim",
+  email: "jeremy.spacemeters@gmail.com"
+};
+</script>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+
+  <div class="sidebar-brand">
+    <div class="brand-circle">
+      <img src="logo.png">
+    </div>
+    <span>Admin</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="active" href="#">Dashboard</a>
+    <a href="employees.html">Employee List</a>
+    <a href="leave-submission-admin.html">Leave Request</a>
+    <a href="overtime-admin.html">Render OT</a>
+    <a href="clients.html">Clients</a>
+  </nav>
+
+  <button class="logout-btn" onclick="logoutAdmin()">Logout</button>
+
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content fade-in">
+
+  <!-- HEADER -->
+  <header class="top-header">
+
+    <h1 id="welcomeText"></h1>
+
+    <div class="header-right">
+
+      <div class="notification">
+        🔔
+        <span class="notification-badge" id="notifCount">3</span>
+
+        <div class="notification-dropdown" id="notificationDropdown"></div>
+      </div>
+
+      <div class="profile-box">
+        <div class="profile-avatar" id="profileInitials"></div>
+        <div class="profile-info">
+          <div class="profile-name" id="adminName"></div>
+          <div class="profile-email" id="adminEmail"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </header>
+
+  <!-- APPROVAL SUMMARY -->
+  <div class="approval-summary">
+    ⚠ 2 requests need your approval
+  </div>
+
+  <!-- STATS -->
+<div class="stats-container">
+
+  <div class="stat-card">
+    <h3>Total Employees</h3>
+    <div class="stat-number" id="totalEmployees">0</div>
+  </div>
+
+  <div class="stat-card">
+    <h3>Pending Leaves</h3>
+    <div class="stat-number" id="pendingLeaves">0</div>
+  </div>
+
+  <div class="stat-card">
+    <h3>Pending OT</h3>
+    <div class="stat-number" id="pendingOT">0</div>
+  </div>
+
+  <div class="stat-card">
+    <h3>Total Requests Today</h3>
+    <div class="stat-number" id="totalToday">0</div>
+  </div>
+
+</div>
+
+  <!-- OVERTIME -->
+  <section class="dashboard-section">
+    <h2>Overtime Renders</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Example Employee</td>
+          <td>May 12</td>
+          <td>4 hrs</td>
+          <td>
+            <span class="status-badge status-approved">Approved</span>
+          </td>
+          <td class="actions">
+            <span class="approve">✔</span>
+            <span class="reject">✖</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- LEAVE -->
+  <section class="dashboard-section">
+    <h2>Leave Requests</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Example Employee</td>
+          <td>May 15</td>
+          <td>2 days</td>
+          <td>
+            <span class="status-badge status-pending">Pending</span>
+          </td>
+          <td class="actions">
+            <span class="approve">✔</span>
+            <span class="reject">✖</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+</main>
+
+
+<script>
+
+function toggleNotifications() {
+  const dropdown = document.getElementById("notificationDropdown");
+  dropdown.classList.toggle("show");
 }
 
-function goOrgChart() {
-	alert("Organizational Chart will be availlable soon");
-  //window.location.href = "org-chart.html";
-}
-
-function goEmployeeList() {
-  window.location.href = "employees.html";
-}
-
-function goBack() {
-  if (document.referrer) {
-    window.history.back();
-  } else {
-    window.location.href = "admin-login.html";
+function logoutAdmin() {
+  window.location.href = "index.html";
   }
-}
 
-function goLogout() {
-  window.location.href = "admin-login.html";
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* =========================
+     ADMIN DATA
+  ========================= */
+
+  const adminData = JSON.parse(localStorage.getItem("adminData")) || {
+    name: "Jeremy Angelo Lim",
+    email: "jeremy.spacemeters@gmail.com"
+  };
+
+  document.getElementById("adminName").innerText = adminData.name;
+  document.getElementById("adminEmail").innerText = adminData.email;
+
+  const initials = adminData.name
+    .split(" ")
+    .map(w => w[0])
+    .join("")
+    .toUpperCase();
+
+  document.getElementById("profileInitials").innerText = initials;
+
+  /* =========================
+     NOTIFICATION TOGGLE
+  ========================= */
+
+  const bell = document.querySelector(".notification");
+  const dropdown = document.getElementById("notificationDropdown");
+
+  if (bell && dropdown) {
+
+    bell.addEventListener("click", function (e) {
+      e.stopPropagation();
+      dropdown.classList.toggle("show");
+    });
+
+    // Close when clicking outside
+    document.addEventListener("click", function () {
+      dropdown.classList.remove("show");
+    });
+
   }
+
+  /* =========================
+     DASHBOARD LOGIC
+  ========================= */
+
+  const SCRIPT_URL =
+    "https://script.google.com/macros/s/AKfycbz4zMRShI6IwL7ehez3Q9VX_ysMQb3Otv__59tgoe5-91zfEN1THvLSJjty_TCN24Wp/exec";
+
+  const CACHE_KEY = "dashboardCache";
+
+  const cached = localStorage.getItem(CACHE_KEY);
+
+  if (cached) {
+    renderDashboard(JSON.parse(cached), false);
+  }
+
+  fetch(`${SCRIPT_URL}?action=getDashboardData`)
+    .then(res => res.json())
+    .then(data => {
+
+      if (!data.success) return;
+
+      const existing = localStorage.getItem(CACHE_KEY);
+
+      if (!existing || JSON.stringify(JSON.parse(existing)) !== JSON.stringify(data)) {
+        renderDashboard(data, true);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+      }
+
+    })
+    .catch(err => console.error(err));
+
+
+  /* =========================
+     RENDER DASHBOARD
+  ========================= */
+
+  function renderDashboard(data, animate = true) {
+
+    updateCounter("totalEmployees", data.totalEmployees, animate);
+    updateCounter("pendingLeaves", data.pendingLeaves, animate);
+    updateCounter("pendingOT", data.pendingOT, animate);
+    updateCounter("totalToday", data.totalToday, animate);
+
+    renderNotifications(data);
+
+    const totalPending = data.pendingLeaves + data.pendingOT;
+
+    document.querySelector(".approval-summary").innerText =
+      totalPending > 0
+        ? `⚠ ${totalPending} requests need your approval`
+        : "✔ No pending approvals";
+
+    document.getElementById("notifCount").innerText = totalPending;
+  }
+
+  function updateCounter(id, value, animate) {
+
+    const el = document.getElementById(id);
+
+    if (!animate) {
+      el.innerText = value;
+      return;
+    }
+
+    const duration = 600;
+    const start = parseInt(el.innerText) || 0;
+    const increment = (value - start) / (duration / 16);
+
+    let current = start;
+
+    const timer = setInterval(() => {
+
+      current += increment;
+
+      if (
+        (increment > 0 && current >= value) ||
+        (increment < 0 && current <= value)
+      ) {
+        el.innerText = value;
+        clearInterval(timer);
+      } else {
+        el.innerText = Math.floor(current);
+      }
+
+    }, 16);
+  }
+
   
+  function renderNotifications(data) {
+
+    dropdown.innerHTML = "";
+
+    const notifications = [];
+
+    (data.recentLeaves || []).forEach(l => {
+      if ((l.status || "").toLowerCase() === "pending") {
+        notifications.push({
+          text: `${l.employeeName} submitted leave`,
+          link: "leave-submission-admin.html",
+          date: l.startDate
+        });
+      }
+    });
+
+    (data.recentOT || []).forEach(o => {
+      if ((o.status || "").toLowerCase() === "pending") {
+        notifications.push({
+          text: `${o.employeeName} rendered overtime`,
+          link: "overtime-admin.html",
+          date: o.date
+        });
+      }
+    });
+
+    if (notifications.length === 0) {
+      dropdown.innerHTML =
+        `<div class="notif-item">No new notifications</div>`;
+      return;
+    }
+
+    notifications
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 5)
+      .forEach(n => {
+
+        const item = document.createElement("div");
+        item.className = "notif-item clickable";
+        item.innerHTML = n.text;
+
+        item.addEventListener("click", function () {
+          window.location.href = n.link;
+        });
+
+        dropdown.appendChild(item);
+      });
+  }
+
+  /* =========================
+     AUTO REFRESH
+  ========================= */
+
+  setInterval(() => {
+
+    fetch(`${SCRIPT_URL}?action=getDashboardData`)
+      .then(res => res.json())
+      .then(data => {
+
+        if (!data.success) return;
+
+        const cached = localStorage.getItem(CACHE_KEY);
+
+        if (!cached || JSON.stringify(JSON.parse(cached)) !== JSON.stringify(data)) {
+
+          renderDashboard(data, true);
+          localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+
+        }
+
+      });
+
+  }, 30000);
+
+});
 </script>
 
 </body>

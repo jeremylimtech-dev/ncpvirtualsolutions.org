@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NCP Bookkeeping</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="/ncpicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="/ncpicon.ico" type="image/x-icon">
+</head>
+<body>
+
+<!-- Admin Button -->
+<div class="admin-icon" onclick="goAdmin()">Login</div>
+
+<!-- Branding -->
+<div style="position: fixed; top: 20px; left: 30px; z-index: 10;">
+  <div class="brand">
+    <div class="brand-circle">
+      <img src="logo.png" alt="NCP Logo">
+    </div>
+    <span>NCP Bookkeeping</span>
+  </div>
+</div>
+
+<!-- HERO CONTENT 
+<div class="home-hero">
+  <h1>
+    Do what you do best,<br>
+    leave the numbers to us 😊
+  </h1>
+
+  <button class="primary-btn" onclick="goInquire()">
+    Inquire now
+  </button>
+</div>-->
+
+<script>
+function goAdmin() {
+  window.location.href = "employee-login.html";
+}
+
+function goInquire() {
+  window.open(
+    "https://www.facebook.com/profile.php?id=100094502228820",
+    "_blank"
+  );
+}
+</script>
+
+</body>
+</html>
+
+

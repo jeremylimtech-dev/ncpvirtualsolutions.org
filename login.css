@@ -1,0 +1,155 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Inter, Arial, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: url("background-image.png") center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* MAIN WRAPPER */
+.main-container {
+  width: 95%;
+  max-width: 1200px;
+  min-height: 650px;
+
+  border-radius: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  padding-right: 120px;
+
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* CARD */
+.login-card {
+  width: 400px;
+  background: #f1f1f3;
+  border-radius: 35px;
+  padding: 50px 40px;
+  text-align: center;
+
+  box-shadow: 0 40px 100px rgba(0,0,0,0.25);
+  animation: slideUp 0.6s ease-out;
+}
+
+.login-brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+.login-brand img {
+  width: 22px;
+}
+
+.login-card h2 {
+  font-size: 24px;
+  margin-bottom: 25px;
+}
+
+/* INPUTS */
+.input-group {
+  margin-bottom: 18px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.input-group input:focus {
+  border-color: #2f5fe3;
+  box-shadow: 0 0 0 3px rgba(47,95,227,0.15);
+  outline: none;
+}
+
+/* BUTTON */
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #2f5fe3;
+  color: white;
+  font-weight: 600;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.login-btn:hover {
+  background: #2449b9;
+  transform: translateY(-2px);
+}
+
+/* DIVIDER */
+.divider {
+  font-size: 13px;
+  margin-bottom: 15px;
+  color: #555;
+}
+
+/* ANIMATIONS */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+/* ROLE TOGGLE */
+.role-toggle {
+  display: flex;
+  background: #e0e0e0;
+  border-radius: 30px;
+  margin-bottom: 25px;
+  overflow: hidden;
+}
+
+.role-toggle button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.role-toggle button.active {
+  background: #2f5fe3;
+  color: white;
+}
+
+/* Google wrapper */
+.google-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}

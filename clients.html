@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Clients</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="/ncpicon.ico">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+</head>
+
+<body class="admin-page">
+
+<script>
+const SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbz4zMRShI6IwL7ehez3Q9VX_ysMQb3Otv__59tgoe5-91zfEN1THvLSJjty_TCN24Wp/exec";
+
+const adminData = {
+  name: "Jeremy Angelo Lim",
+  email: "jeremy.spacemeters@gmail.com"
+};
+</script>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+
+  <div class="sidebar-brand">
+    <div class="brand-circle">
+      <img src="logo.png">
+    </div>
+    <span>Admin</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="admin-dashboard.html">Dashboard</a>
+    <a href="employees.html">Employee List</a>
+    <a href="leave-submission-admin.html">Leave Request</a>
+    <a href="overtime-admin.html">Render OT</a>
+    <a class="active" href="#">Clients</a>
+  </nav>
+
+  <button class="logout-btn" onclick="logoutAdmin()">Logout</button>
+
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content fade-in">
+
+<header class="top-header">
+  <h1>Clients</h1>
+
+  <div class="header-right">
+    <div class="profile-box">
+      <div class="profile-avatar" id="profileInitials"></div>
+      <div class="profile-info">
+        <div class="profile-name" id="adminName"></div>
+        <div class="profile-email" id="adminEmail"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="dashboard-section">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <h2 style="margin:0;">Clients List</h2>
+    <button class="primary-btn" onclick="openClientModal()">
+      Add Client
+    </button>
+  </div>
+
+  <!-- LOADING STATE -->
+  <div class="table-loading" id="clientsLoading">
+    <div class="loader"></div>
+    <span>Loading clients...</span>
+  </div>
+
+  <table id="clientsTable">
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Name</th>
+        <th>Region</th>
+        <th>Date Started</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="clientsTableBody"></tbody>
+  </table>
+
+</section>
+
+</main>
+
+<div class="client-modal-overlay" id="addClientModal">
+
+  <div class="modern-client-modal">
+
+    <div class="client-modal-header">
+      <h2>Add Client</h2>
+      <button class="client-modal-close" onclick="closeClientModal()">✕</button>
+    </div>
+
+    <div class="client-modal-grid">
+
+      <div class="client-input-group">
+        <label>Client Name</label>
+        <input type="text" id="clientName">
+      </div>
+
+      <div class="client-input-group">
+        <label>Region</label>
+        <select id="clientRegion">
+          <option value="Philippines">PH - Philippines</option>
+          <option value="Australian">AUS - Australian</option>
+          <option value="United States">US - United States</option>
+        </select>
+      </div>
+
+      <div class="client-input-group">
+        <label>Date Started</label>
+        <input type="text" id="clientDate" placeholder="Select date">
+      </div>
+
+      <div class="client-input-group">
+        <label>Status</label>
+        <select id="clientStatus">
+          <option>Active</option>
+          <option>Inactive</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="client-modal-footer">
+      <button class="client-btn-secondary" onclick="closeClientModal()">Cancel</button>
+      <button class="client-btn-primary" id="saveClientBtn" onclick="saveClient()">
+        Save Client
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- EDIT CLIENT MODAL -->
+<div class="client-modal-overlay" id="editClientModal">
+
+  <div class="modern-client-modal">
+
+    <div class="client-modal-header">
+      <h2>Edit Client</h2>
+      <button class="client-modal-close" onclick="closeEditClientModal()">✕</button>
+    </div>
+
+    <div class="client-modal-grid">
+
+      <div class="client-input-group">
+        <label>Client Code</label>
+        <input type="text" id="editClientCode" readonly>
+      </div>
+
+      <div class="client-input-group">
+        <label>Client Name</label>
+        <input type="text" id="editClientName">
+      </div>
+
+      <div class="client-input-group">
+        <label>Region</label>
+        <select id="editClientRegion">
+          <option value="Philippines">PH - Philippines</option>
+          <option value="Australian">AUS - Australian</option>
+          <option value="United States">US - United States</option>
+        </select>
+      </div>
+
+      <div class="client-input-group">
+        <label>Date Started</label>
+        <input type="text" id="editClientDate">
+      </div>
+
+      <div class="client-input-group">
+        <label>Status</label>
+        <select id="editClientStatus">
+          <option>Active</option>
+          <option>Inactive</option>
+        </select>
+      </div>
+
+    </div>
+
+    <div class="client-modal-footer">
+      <button class="client-btn-secondary" onclick="closeEditClientModal()">Cancel</button>
+      <button class="client-btn-primary" id="updateClientBtn" onclick="updateClient()">
+        Save Changes
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+/* =========================
+   PROFILE SETUP
+========================= */
+document.getElementById("adminName").innerText = adminData.name;
+document.getElementById("adminEmail").innerText = adminData.email;
+
+document.getElementById("profileInitials").innerText =
+  adminData.name
+    .split(" ")
+    .map(w => w[0])
+    .join("")
+    .toUpperCase();
+
+/* =========================
+   SMART CLIENT CODE
+========================= */
+function generateClientCode(name) {
+
+  if (!name) return "";
+
+  const words = name.trim().split(" ").filter(Boolean);
+
+  if (words.length === 1) {
+    return words[0].substring(0, 3).toUpperCase();
+  }
+
+  return words.map(w => w[0]).join("").toUpperCase();
+}
+
+/* =========================
+   LOAD CLIENTS
+========================= */
+function loadClients() {
+
+  const loading = document.getElementById("clientsLoading");
+  const table = document.getElementById("clientsTable");
+  const tbody = document.getElementById("clientsTableBody");
+
+  // 🔹 Initial state
+  loading.classList.remove("hidden");
+  table.classList.add("hidden");
+
+  fetch(`${SCRIPT_URL}?action=getClientsFull`)
+    .then(res => res.json())
+    .then(data => {
+
+      tbody.innerHTML = "";
+
+      if (!data.clients || data.clients.length === 0) {
+        tbody.innerHTML = `
+          <tr><td colspan="6">No clients found</td></tr>
+        `;
+      } else {
+
+        data.clients.forEach(client => {
+
+          const row = document.createElement("tr");
+
+          row.innerHTML = `
+            <td>
+              <span class="client-code">${client.code}</span>
+            </td>
+            <td>${client.name}</td>
+            <td>${client.region}</td>
+            <td>${formatDate(client.dateStarted)}</td>
+            <td>
+              <span class="status-badge status-${client.status.toLowerCase()}">
+                ${client.status}
+              </span>
+            </td>
+            <td>
+              <button class="edit-btn"
+                onclick="openEditClient('${client.code}')">
+                Edit
+              </button>
+            </td>
+          `;
+
+          tbody.appendChild(row);
+
+        });
+      }
+
+      // 🔹 Hide spinner, show table
+      loading.classList.add("hidden");
+      table.classList.remove("hidden");
+
+    })
+    .catch(() => {
+      loading.classList.add("hidden");
+      table.classList.remove("hidden");
+
+      tbody.innerHTML =
+        `<tr><td colspan="6">Error loading clients</td></tr>`;
+    });
+}
+
+function formatDate(dateString) {
+
+  if (!dateString) return "";
+
+  const date = new Date(dateString);
+
+  if (isNaN(date)) return dateString;
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+}
+
+loadClients();
+
+/* =========================
+   MODERN DATE PICKER
+========================= */
+
+flatpickr("#clientDate", {
+  dateFormat: "Y-m-d",
+  maxDate: "today",         // Prevent future dates
+  allowInput: true,
+  disableMobile: true,      // Force consistent desktop picker
+  animate: true,
+  onOpen: function(selectedDates, dateStr, instance) {
+    instance.calendarContainer.classList.add("flatpickr-animate");
+  }
+});
+
+flatpickr("#editClientDate", {
+  dateFormat: "Y-m-d",
+  maxDate: "today",
+  disableMobile: true
+});
+
+
+function openEditClient(code) {
+
+  fetch(`${SCRIPT_URL}?action=getClientByCode&code=${code}`)
+    .then(res => res.json())
+    .then(data => {
+
+      if (!data.success) return alert("Failed to load client");
+
+      const client = data.client;
+
+      document.getElementById("editClientCode").value = client.code;
+      document.getElementById("editClientName").value = client.name;
+      document.getElementById("editClientRegion").value = client.region;
+      document.getElementById("editClientDate").value = client.dateStarted;
+      document.getElementById("editClientStatus").value = client.status;
+
+      document.getElementById("editClientModal").classList.add("active");
+
+    });
+}
+
+
+function updateClient() {
+
+  const btn = document.getElementById("updateClientBtn");
+
+  btn.classList.add("loading");
+  btn.disabled = true;
+  btn.innerHTML = 'Saving <span class="btn-spinner"></span>';
+
+  const payload = {
+    action: "updateClient",
+    code: document.getElementById("editClientCode").value,
+    name: document.getElementById("editClientName").value,
+    region: document.getElementById("editClientRegion").value,
+    dateStarted: document.getElementById("editClientDate").value,
+    status: document.getElementById("editClientStatus").value
+  };
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (data.success) {
+
+      btn.classList.remove("loading");
+      btn.classList.add("success");
+      btn.innerHTML = "Updated ✓";
+
+      setTimeout(() => {
+        closeEditClientModal();
+        loadClients();
+        btn.classList.remove("success");
+        btn.disabled = false;
+        btn.innerHTML = "Save Changes";
+      }, 800);
+
+    } else {
+      throw new Error();
+    }
+
+  })
+  .catch(() => {
+    btn.classList.remove("loading");
+    btn.disabled = false;
+    btn.innerHTML = "Save Changes";
+    alert("Update failed");
+  });
+}
+
+
+/* =========================
+   ADD CLIENT
+========================= */
+function saveClient() {
+
+  const btn = document.getElementById("saveClientBtn");
+
+  const name = document.getElementById("clientName").value;
+
+  if (!name) {
+    alert("Client name required");
+    return;
+  }
+
+  // 🔹 Loading State
+  btn.classList.add("loading");
+  btn.disabled = true;
+  btn.innerHTML = 'Submitting <span class="btn-spinner"></span>';
+
+  const payload = {
+    action: "addClient",
+    name: name,
+    region: document.getElementById("clientRegion").value,
+    dateStarted: document.getElementById("clientDate").value,
+    status: document.getElementById("clientStatus").value
+  };
+
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (data.success) {
+
+      // 🔹 Success State
+      btn.classList.remove("loading");
+      btn.classList.add("success");
+      btn.innerHTML = "Saved ✓";
+
+      setTimeout(() => {
+        closeClientModal();
+        loadClients();
+
+        // Reset button for next open
+        btn.classList.remove("success");
+        btn.disabled = false;
+        btn.innerHTML = "Save Client";
+
+      }, 800);
+
+    } else {
+      throw new Error("Failed");
+    }
+
+  })
+  .catch(() => {
+    btn.classList.remove("loading");
+    btn.disabled = false;
+    btn.innerHTML = "Save Client";
+    alert("Error saving client");
+  });
+}
+
+/* =========================
+   MODAL CONTROL
+========================= */
+function openClientModal() {
+  document
+    .getElementById("addClientModal")
+    .classList.add("active");
+}
+
+function closeClientModal() {
+  document
+    .getElementById("addClientModal")
+    .classList.remove("active");
+}
+
+function logoutAdmin() {
+  window.location.href = "index.html";
+}
+
+function closeEditClientModal() {
+  document.getElementById("editClientModal").classList.remove("active");
+}
+
+
+
+</script>
+
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Leave Requests</title>
+<title>Overtime Requests</title>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="/ncpicon.ico">
 </head>
@@ -22,8 +22,8 @@
   <nav class="sidebar-nav">
     <a href="admin-dashboard.html">Dashboard</a>
     <a href="employees.html">Employee List</a>
-    <a class="active" href="#">Leave Request</a>
-    <a href="overtime-admin.html">Render OT</a>
+    <a href="leave-submission-admin.html">Leave Request</a>
+    <a class="active" href="overtime-admin.html">Render OT</a>
     <a href="clients.html">Clients</a>
   </nav>
 
@@ -35,7 +35,7 @@
 <main class="main-content fade-in">
 
 <header class="top-header">
-  <h1>Leave Requests</h1>
+  <h1>Overtime Request</h1>
 
   <div class="header-right">
     <div class="profile-box">
@@ -57,27 +57,26 @@
     <button class="tab" onclick="switchTab(event,'Rejected')">Rejected</button>
   </div>
 
-  <div id="leaveLoading" class="table-loading">
+  <div id="otLoading" class="table-loading">
   <div class="loader"></div>
-  <div>Loading leave requests...</div>
+  <div>Loading overtime requests...</div>
   </div>
 
-  <table class="leave-table hidden">
+  <table id="otTable" class="leave-table hidden">
   <thead>
     <tr>
       <th>Name</th>
-      <th>Type</th>
-      <th>Dates</th>
+      <th>Date</th>
       <th>Hours</th>
-      <th>Reason</th>
+      <th>Description</th>
       <th>Status</th>
       <th></th>
     </tr>
   </thead>
-  <tbody id="leaveContainer"></tbody>
+  <tbody id="overtimeContainer"></tbody>
 </table>
 
-<div id="leavePagination" class="pagination"></div>
+<div id="overtimePagination" class="pagination"></div>
 
 </section>
 
@@ -100,39 +99,77 @@ document.getElementById("profileInitials").innerText =
    STATE
 ========================= */
 
-let allLeaves = [];
+let allOvertime = [];
 let currentTab = "Pending";
 let currentPage = 1;
 const rowsPerPage = 10;
 
 /* =========================
-   LOAD LEAVES
+   LOAD OVERTIME
 ========================= */
 
-const loadingEl = document.getElementById("leaveLoading");
-const tableEl = document.querySelector(".leave-table");
+const loadingEl = document.getElementById("otLoading");
+const tableEl = document.getElementById("otTable");
+const tbody = tableEl.querySelector("tbody");
 
-fetch(`${SCRIPT_URL}?action=getLeaves`)
+let hasLoaded = false;
+
+// 🔥 Timeout fallback (5 seconds)
+const timeout = setTimeout(() => {
+  if (!hasLoaded) {
+    loadingEl.classList.add("hidden");
+    tableEl.classList.remove("hidden");
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="empty-state">
+          No overtime requests
+        </td>
+      </tr>
+    `;
+  }
+}, 5000);
+
+fetch(`${SCRIPT_URL}?action=getOvertime`)
   .then(res => res.json())
   .then(data => {
+
+    hasLoaded = true;
+    clearTimeout(timeout);
 
     loadingEl.classList.add("hidden");
     tableEl.classList.remove("hidden");
 
-    if (!data.success) return;
+    if (!data.success || !data.overtime || data.overtime.length === 0) {
 
-    allLeaves = (data.leaves || []).map(l => ({
-      ...l,
-      status: (l.status || "Pending").toString().trim()
-    }));
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty-state">
+            No overtime requests
+          </td>
+        </tr>
+      `;
+      return;
+    }
 
-    renderLeaves();
+    allOvertime = data.overtime || [];
+    renderOvertime();
   })
   .catch(() => {
-    loadingEl.innerHTML = "Failed to load data.";
+    clearTimeout(timeout);
+    loadingEl.classList.add("hidden");
+    tableEl.classList.remove("hidden");
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="empty-state">
+          Failed to load overtime data
+        </td>
+      </tr>
+    `;
   });
-  
-  /* =========================
+
+/* =========================
    TAB SWITCHING
 ========================= */
 
@@ -146,63 +183,52 @@ function switchTab(e, tab) {
 
   e.target.classList.add("active");
 
-  renderLeaves();
+  renderOvertime();
 }
 
 /* =========================
-   RENDER LEAVES
+   RENDER OVERTIME
 ========================= */
 
-function renderLeaves() {
+function renderOvertime() {
 
-  const container = document.getElementById("leaveContainer");
-  const pagination = document.getElementById("leavePagination");
-
+  const container = document.getElementById("overtimeContainer");
   container.innerHTML = "";
-  pagination.innerHTML = "";
 
-  const filtered = allLeaves
-    .filter(l =>
-      l.status.toLowerCase().trim() === currentTab.toLowerCase()
-    )
-    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+  const pending = allOvertime.filter(o =>
+    o.status.toLowerCase() === currentTab.toLowerCase()
+  );
 
-  if (filtered.length === 0) {
-    container.innerHTML = `
-      <tr>
-        <td colspan="7" class="empty-state">
-          No ${currentTab.toLowerCase()} leave requests
-        </td>
-      </tr>`;
+  if (pending.length === 0) {
+    container.innerHTML =
+      `<tr><td colspan="6" class="empty-state">
+        No ${currentTab.toLowerCase()} overtime requests
+      </td></tr>`;
     return;
   }
 
-  const start = (currentPage - 1) * rowsPerPage;
-  const paginated = filtered.slice(start, start + rowsPerPage);
-
-  paginated.forEach(l => {
+  pending.forEach(o => {
 
     const row = document.createElement("tr");
 
     row.innerHTML = `
-      <td><strong>${l.employeeName}</strong></td>
-      <td>${l.leaveType}</td>
-      <td>${formatDate(l.startDate)} → ${formatDate(l.endDate)}</td>
-      <td>${l.totalHours} hrs</td>
-      <td>${l.reason || "-"}</td>
+      <td><strong>${o.employeeName}</strong></td>
+      <td>${formatDate(o.date)}</td>
+      <td>${o.hours} hrs</td>
+      <td>${o.description}</td>
       <td>
-        <span class="status-badge status-${l.status.toLowerCase()}">
-          ${l.status}
+        <span class="status-badge status-${o.status.toLowerCase()}">
+          ${o.status}
         </span>
       </td>
       <td>
         ${currentTab === "Pending" ? `
           <button class="approve-btn"
-            onclick="updateStatus(${l.rowIndex}, 'Approved', this)">
+            onclick="updateOvertime(${o.rowIndex}, 'Approved', this)">
             Approve
           </button>
           <button class="reject-btn"
-            onclick="updateStatus(${l.rowIndex}, 'Rejected', this)">
+            onclick="updateOvertime(${o.rowIndex}, 'Rejected', this)">
             Reject
           </button>
         ` : ""}
@@ -211,8 +237,6 @@ function renderLeaves() {
 
     container.appendChild(row);
   });
-
-  renderPagination(filtered.length);
 }
 
 
@@ -239,7 +263,7 @@ function showToast(message, type = "success") {
 
 function renderPagination(total) {
 
-  const container = document.getElementById("leavePagination");
+  const container = document.getElementById("overtimePagination");
   const totalPages = Math.ceil(total / rowsPerPage);
 
   if (totalPages <= 1) return;
@@ -272,7 +296,7 @@ function createPageBtn(text, page, active = false) {
 
   btn.onclick = () => {
     currentPage = page;
-    renderLeaves();
+    renderOvertime();
   };
 
   return btn;
@@ -281,78 +305,49 @@ function createPageBtn(text, page, active = false) {
 /* =========================
    UPDATE STATUS
 ========================= */
-function updateStatus(rowIndex, status, btn) {
+function updateOvertime(rowIndex, status, btn) {
 
-  const confirmText = status === "Approved"
-    ? "Approve this leave request?"
-    : "Reject this leave request?";
+  openConfirm(
+    status === "Approved"
+      ? "Approve this overtime request?"
+      : "Reject this overtime request?",
+    () => {
 
-  openConfirm(confirmText, () => {
-
-    btn.disabled = true;
-
-    fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "updateLeaveStatus",
-        rowIndex,
-        status,
-        adminName
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "updateOvertimeStatus",
+          rowIndex,
+          status,
+          adminName
+        })
       })
-    })
-    .then(res => res.json())
-    .then(data => {
+      .then(res => res.json())
+      .then(data => {
 
-      if (!data.success) {
-        showToast("Update failed ❌", "error");
-        btn.disabled = false;
-        return;
-      }
+        if (!data.success) {
+          showToast("Update failed ❌", "error");
+          return;
+        }
 
-      const row = btn.closest("tr");
+        const row = btn.closest("tr");
+        row.style.opacity = "0";
+        row.style.transition = "all 0.3s ease";
 
-      row.style.opacity = "0";
-      row.style.transform = "translateX(20px)";
-      row.style.transition = "all 0.3s ease";
-
-      setTimeout(() => {
-
-        const leave = allLeaves.find(l => l.rowIndex === rowIndex);
-        if (leave) leave.status = status;
-
-        updateSidebarBadge();
-        renderLeaves();
-
-        showToast(
-          status === "Approved"
-            ? "Leave approved ✅"
-            : "Leave rejected ❌",
-          "success"
-        );
-
-      }, 300);
-
-    });
-
-  });
+        setTimeout(() => {
+          const req = allOvertime.find(o => o.rowIndex === rowIndex);
+          if (req) req.status = status;
+          renderOvertime();
+          showToast("Overtime updated ✅");
+        }, 300);
+      });
+    }
+  );
 }
 
 /* =========================
    HELPERS
 ========================= */
-
-function updateSidebarBadge() {
-  const count =
-    allLeaves.filter(l =>
-      (l.status || "")
-        .toString()
-        .trim()
-        .toLowerCase() === "pending"
-    ).length;
-
-  document.getElementById("leaveBadge").innerText = count;
-}
-
 function formatDate(d) {
   if (!d) return "-";
   return new Date(d).toLocaleDateString();
