@@ -112,15 +112,13 @@ function handleCredentialResponse(response) {
 
 function verifyEmployee(idToken) {
 
+  const body = new URLSearchParams();
+  body.append("action", "employeeAuth");
+  body.append("idToken", idToken);
+
   fetch(SCRIPT_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      action: "employeeAuth",
-      idToken: idToken
-    })
+    body: body
   })
   .then(res => res.json())
   .then(data => {
@@ -130,7 +128,6 @@ function verifyEmployee(idToken) {
       return;
     }
 
-    // Store token + employee info
     localStorage.setItem("employeeToken", idToken);
     localStorage.setItem("employeeData", JSON.stringify(data.employee));
 
