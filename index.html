@@ -122,11 +122,21 @@ function verifyEmployee(idToken) {
       idToken: idToken
     })
   })
-  .then(res => res.json())
+  .then(async res => {
+
+    // Show HTTP error if not 200
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error("HTTP " + res.status + " → " + text);
+    }
+
+    return res.json();
+  })
   .then(data => {
 
     if (!data.success) {
-      alert("Access denied.");
+      console.error("Backend response:", data);
+      alert("Access denied. Check console for details.");
       return;
     }
 
@@ -136,8 +146,8 @@ function verifyEmployee(idToken) {
     window.location.href = "employee-dashboard.html";
   })
   .catch(err => {
-    console.error(err);
-    alert("Login failed.");
+    console.error("LOGIN ERROR:", err);
+    alert("Login failed. Open DevTools → Console.");
   });
 }
 
