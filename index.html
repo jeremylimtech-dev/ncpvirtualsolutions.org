@@ -112,14 +112,15 @@ function handleCredentialResponse(response) {
 
 function verifyEmployee(idToken) {
 
-  const body = new URLSearchParams({
-    action: "verifyEmployeeGoogle",
-    token: idToken
-  });
-
   fetch(SCRIPT_URL, {
     method: "POST",
-    body
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      action: "employeeAuth",
+      idToken: idToken
+    })
   })
   .then(res => res.json())
   .then(data => {
@@ -129,8 +130,15 @@ function verifyEmployee(idToken) {
       return;
     }
 
+    // Store token + employee info
     localStorage.setItem("employeeToken", idToken);
+    localStorage.setItem("employeeData", JSON.stringify(data.employee));
+
     window.location.href = "employee-dashboard.html";
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Login failed.");
   });
 }
 
